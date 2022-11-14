@@ -19,7 +19,7 @@ class GameApp(tk.Tk):
 
 
 class GameGUI(tk.Frame):
-    def __init__(self, parent, game):
+    def __init__(self, parent: tk.Tk, game: ttt.Game):
         super().__init__(parent)
         self.parent = parent
         self.game = game
@@ -33,25 +33,21 @@ class GameGUI(tk.Frame):
 
 
 class TicTacToeGrid(tk.Frame):
-    def __init__(self, parent, game):
+    def __init__(self, parent: tk.Widget, game: ttt.Game):
         super().__init__(parent)
         self.parent = parent
         self.game = game
 
-        self.cell_grid = [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0]
-        ]
+        self.cell_grid = []
 
         for i in range(3):
+            self.cell_grid.append([])
+
             for j in range(3):
-                print(j)
-                new_cell = TicTacToeCell(self, self.game, (i, j))
-
-                self.cell_grid[i][j] = new_cell
-
+                new_cell = TicTacToeCell(self, self.game, (i, j), self.update)
                 new_cell.grid(row=i, column=j, sticky='news')
+
+                self.cell_grid[i].append(new_cell)
 
         for i in range(3):
             self.rowconfigure(i, weight=1)
@@ -59,33 +55,47 @@ class TicTacToeGrid(tk.Frame):
         for i in range(3):
             self.columnconfigure(i, weight=1)
 
+    def update(self):
+        pass
+
 
 class TicTacToeCell(tk.Button):
-    def __init__(self, parent, game, pos):
+    def __init__(self, parent: tk.Widget, game: ttt.Game, pos: tuple[int, int], parent_update=None):
         self.parent = parent
         self.game = game
         self.pos = pos
+        self.parent_update = parent_update
 
         super().__init__(self.parent, command=self.clicked)
 
     def clicked(self):
         print(f'Clicked {self.pos}')
 
-        if self.game.peek(self.pos):
-            print('Nope')
-        else:
-            counter = self.game.current_player.pop_counter()
+        if not self.game.peek(self.pos):
+            if self.game.current_player.has_counters():
 
-            self.game.play_counter(counter, self.pos)
+                counter = self.game.current_player.pop_counter()
 
-            self.configure(text=counter.label)
+                self.game.play_counter(counter, self.pos)
 
-            self.game.check_for_winner()
-
-            if self.game.has_winner:
-                print(f'Winner is {self.game.winner}')
-            else:
+            if not self.game.has_winner:
                 self.game.next_turn()
+
+        else:
+            print('Nope')
+
+        self.update()
+
+        if self.parent_update:
+            self.parent_update()
+
+    def update(self):
+        counter: ttt.Counter = self.game.peek(self.pos)
+
+        if counter:
+            self.configure(text=counter.label)
+        else:
+            self.configure(text='')
 
         print(self.game.get_grid())
 

@@ -42,6 +42,9 @@ class Player:
     def add_counter(self, my_counter):
         self.counters.append(my_counter)
 
+    def has_counters(self):
+        return bool(self.counters)
+
     def pop_counter(self):
         return self.counters.pop()
 
@@ -74,7 +77,7 @@ class Game:
 
         # Who's going first?
 
-        self.current_player = self.player1
+        self.current_player: Player = self.player1
 
         # Give each player some counters - six is more than enough in tic-tac-toe!
 
@@ -114,6 +117,7 @@ class Game:
     def play_counter(self, my_counter, pos):
         my_counter.set_pos(pos)
         self.placed_counters.append(my_counter)
+        self.check_for_winner()
 
     def next_turn(self):
         self.current_player = self.successor_dict[self.current_player]
