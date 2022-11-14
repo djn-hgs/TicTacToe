@@ -24,19 +24,37 @@ class GameGUI(tk.Frame):
         self.parent = parent
         self.game = game
 
-        game_grid = TicTacToeGrid(self, self.game)
+        self.game_grid = TicTacToeGrid(self, self.game, self.status_update)
+        self.status_label = tk.Label(self)
 
-        game_grid.grid(sticky='news')
+        self.game_grid.grid(row=0, column=0, sticky='news')
+        self.status_label.grid(row=1, column=0, sticky='ew')
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=0)
+
+        self.status_update()
+
+    def status_update(self):
+        status_text = ''
+
+        status_text += f'Current player: {self.game.current_player.name}.'
+
+        if self.game.has_winner:
+            status_text += f' {self.game.winner.name} wins.'
+
+        self.status_label.configure(text=status_text)
 
 
 class TicTacToeGrid(tk.Frame):
-    def __init__(self, parent: tk.Widget, game: ttt.Game):
-        super().__init__(parent)
+    def __init__(self, parent: tk.Widget, game: ttt.Game, update_method=None):
         self.parent = parent
+
+        super().__init__(self.parent)
+
         self.game = game
+        self.update_method = update_method
 
         self.cell_grid = []
 
@@ -44,7 +62,7 @@ class TicTacToeGrid(tk.Frame):
             self.cell_grid.append([])
 
             for j in range(3):
-                new_cell = TicTacToeCell(self, self.game, (i, j), self.update)
+                new_cell = TicTacToeCell(self, self.game, (i, j), self.update_method)
                 new_cell.grid(row=i, column=j, sticky='news')
 
                 self.cell_grid[i].append(new_cell)
@@ -60,11 +78,11 @@ class TicTacToeGrid(tk.Frame):
 
 
 class TicTacToeCell(tk.Button):
-    def __init__(self, parent: tk.Widget, game: ttt.Game, pos: tuple[int, int], parent_update=None):
+    def __init__(self, parent: tk.Widget, game: ttt.Game, pos: tuple[int, int], update_method=None):
         self.parent = parent
         self.game = game
         self.pos = pos
-        self.parent_update = parent_update
+        self.update_method = update_method
 
         super().__init__(self.parent, command=self.clicked)
 
@@ -77,8 +95,6 @@ class TicTacToeCell(tk.Button):
                 counter = self.game.current_player.pop_counter()
 
                 self.game.play_counter(counter, self.pos)
-
-            if not self.game.has_winner:
                 self.game.next_turn()
 
         else:
@@ -86,8 +102,8 @@ class TicTacToeCell(tk.Button):
 
         self.update()
 
-        if self.parent_update:
-            self.parent_update()
+        if self.update_method:
+            self.update_method()
 
     def update(self):
         counter: ttt.Counter = self.game.peek(self.pos)
