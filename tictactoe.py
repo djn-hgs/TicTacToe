@@ -1,8 +1,12 @@
-
+# A counter has a name and a position
+# I subclass to create the specific "0" and "X" counters
 class Counter:
     def __init__(self):
         self.pos = None
         self.label = None
+
+    def __repr__(self):
+        return f'{self.label} at {self.pos}'
     
     def set_pos(self, pos):
         self.pos = pos
@@ -25,13 +29,15 @@ class Cross(Counter):
         self.label = "X"
 
 
+# A player just has a name and some counters
+
 class Player:
     def __init__(self, name):
         self.name = name
         self.counters = []
 
     def __str__(self):
-        return {self.name} + {self.counters}
+        return f'{self.name} - {self.counters}'
 
     def add_counter(self, my_counter):
         self.counters.append(my_counter)
@@ -40,27 +46,44 @@ class Player:
         return self.counters.pop()
 
 
+# This is our game
+
 class Game:
     def __init__(self):
+
+        # This is a two player game
+
         self.player1 = Player('Arthur')
         self.player2 = Player('Boris')
 
+        # Somewhere to place counters in the game
+
         self.placed_counters = []
+
+        # The state of the game
         
         self.has_winner = False
         self.winner = None
+
+        # How do we know who plays next? Easy for tic-tac-tow
 
         self.successor_dict = {
             self.player1: self.player2,
             self.player2: self.player1
         }
-        
+
+        # Who's going first?
+
         self.current_player = self.player1
-        
+
+        # Give each player some counters - six is more than enough in tic-tac-toe!
+
         for i in range(6):
             self.player1.add_counter(Nought())
             self.player2.add_counter(Cross())
             
+        # These are all the winning plays for tic-tac-toe
+
         self.winning_plays = {
             self.player1: [
                 ([(0, 0), (1, 0), (2, 0)], Nought),
@@ -71,6 +94,7 @@ class Game:
                 ([(1, 0), (1, 1), (1, 2)], Nought),
                 ([(2, 0), (2, 1), (2, 2)], Nought),
 
+                ([(0, 2), (1, 1), (2, 0)], Nought),
                 ([(0, 0), (1, 1), (2, 2)], Nought)
             ],
             self.player2: [
@@ -82,6 +106,7 @@ class Game:
                 ([(1, 0), (1, 1), (1, 2)], Cross),
                 ([(2, 0), (2, 1), (2, 2)], Cross),
 
+                ([(0, 2), (1, 1), (2, 0)], Cross),
                 ([(0, 0), (1, 1), (2, 2)], Cross)
             ]
         }
@@ -116,8 +141,8 @@ class Game:
         ]
 
         for c in self.placed_counters:
-            row, col = c.pos
-            grid[row][col] = c.label
+            c_row, c_col = c.pos
+            grid[c_row][c_col] = c.label
 
         return grid
 
@@ -130,8 +155,8 @@ if __name__ == '__main__':
 
         getting_choice = True
 
-        row: int
-        col: int
+        row = 0
+        col = 0
 
         while getting_choice:
             print(my_game.get_grid())
@@ -146,6 +171,9 @@ if __name__ == '__main__':
                 getting_choice = False
 
         my_game.play_counter(counter, (row, col))
+        my_game.check_for_winner()
 
-        my_game.next_turn()
+        if not my_game.has_winner:
+            my_game.next_turn()
 
+    print(f'The winner is {my_game.winner}')
